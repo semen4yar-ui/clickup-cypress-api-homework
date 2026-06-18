@@ -1,0 +1,26 @@
+version: 2.1
+
+jobs:
+  cypress-tests:
+    docker:
+      - image: cypress/included:15.17.0
+
+    working_directory: ~/project/ClickUpCypressApi
+
+    steps:
+      - checkout
+
+      - run:
+          name: Install dependencies
+          command: npm install
+
+      - run:
+          name: Run Cypress Tests
+          command: npx cypress run --browser electron
+
+workflows:
+  version: 2
+
+  test:
+    jobs:
+      - cypress-tests
