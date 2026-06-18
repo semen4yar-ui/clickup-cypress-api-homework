@@ -5,18 +5,20 @@ jobs:
     docker:
       - image: cypress/included:15.17.0
 
-    working_directory: ~/project/ClickUpCypressApi
-
     steps:
       - checkout
 
       - run:
           name: Install dependencies
-          command: npm install
+          command: |
+            cd ClickUpCypressApi
+            npm install
 
       - run:
           name: Run Cypress Tests
-          command: npx cypress run --browser electron
+          command: |
+            cd ClickUpCypressApi
+            npx cypress run --browser electron
 
 workflows:
   version: 2
