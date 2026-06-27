@@ -1,84 +1,95 @@
 describe("ClickUp Goals API", () => {
-  const token = "pk_302431133_BK1YCW2R158P66GBPPNAO55R5VCFXKV9";
-  const teamId = "90121750965";
+  const baseUrl = Cypress.env("baseUrl");
+  const token = Cypress.env("token");
+  const teamId = Cypress.env("teamId");
 
-  let goalId;
-  let goalName;
-  let updatedGoalName;
+  const headers = {
+    Authorization: token,
+    "Content-Type": "application/json"
+  };
 
-  it("Create goal", () => {
-    goalName = "Cypress Goal " + Date.now();
+  it("Create, get, update and delete goal", () => {
+    const goalName = "Cypress Goal " + Date.now();
+    const updatedGoalName = "Updated Cypress Goal " + Date.now();
 
     cy.request({
       method: "POST",
-      url: `https://api.clickup.com/api/v2/team/${teamId}/goal`,
-      headers: {
-        Authorization: token
-      },
+      url: `${baseUrl}/team/${teamId}/goal`,
+      headers,
       body: {
         name: goalName,
         due_date: Date.now() + 86400000
       }
-    }).then((response) => {
-      expect(response.status).to.eq(200);
-      expect(response.body.goal.name).to.eq(goalName);
-      expect(response.body.goal.id).to.exist;
+    }).then((createResponse) => {
+      expect(createResponse.status).to.eq(200);
+      expect(createResponse.body.goal.name).to.eq(goalName);
+      expect(createResponse.body.goal.id).to.exist;
 
-      goalId = response.body.goal.id;
+      const goalId = createResponse.body.goal.id;
+
+      cy.request({
+        method: "GET",
+        url: `${baseUrl}/goal/${goalId}`,
+        headers
+      }).then((getResponse) => {
+        expect(getResponse.status).to.eq(200);
+        expect(getResponse.body.goal.id).to.eq(goalId);
+        expect(getResponse.body.goal.name).to.eq(goalName);
+      });
+
+      cy.request({
+        method: "PUT",
+        url: `${baseUrl}/goal/${goalId}`,
+        headers,
+        body: {
+          name: updatedGoalName
+        }
+      }).then((updateResponse) => {
+        expect(updateResponse.status).to.eq(200);
+        expect(updateResponse.body.goal.name).to.eq(updatedGoalName);
+      });
+
+      cy.request({
+        method: "DELETE",
+        url: `${baseUrl}/goal/${goalId}`,
+        headers
+      }).then((deleteResponse) => {
+        expect(deleteResponse.status).to.eq(200);
+      });
     });
   });
 
-  it("Get goal", () => {
-    cy.request({
-      method: "GET",
-      url: `https://api.clickup.com/api/v2/goal/${goalId}`,
-      headers: {
-        Authorization: token
-      }
-    }).then((response) => {
-      expect(response.status).to.eq(200);
-      expect(response.body.goal.id).to.eq(goalId);
-      expect(response.body.goal.name).to.eq(goalName);
-    });
-  });
-
-  it("Update goal", () => {
-    updatedGoalName = "Updated Cypress Goal " + Date.now();
+  it("Should not get goals without token", () => {
+    const goalName = "Negative Cypress Goal " + Date.now();
 
     cy.request({
-      method: "PUT",
-      url: `https://api.clickup.com/api/v2/goal/${goalId}`,
-      headers: {
-        Authorization: token
-      },
+      method: "POST",
+      url: `${baseUrl}/team/${teamId}/goal`,
+      headers,
       body: {
-        name: updatedGoalName
+        name: goalName,
+        due_date: Date.now() + 86400000
       }
-    }).then((response) => {
-      expect(response.status).to.eq(200);
-      expect(response.body.goal.name).to.eq(updatedGoalName);
-    });
-  });
+    }).then((createResponse) => {
+      expect(createResponse.status).to.eq(200);
 
-  it("Delete goal", () => {
-    cy.request({
-      method: "DELETE",
-      url: `https://api.clickup.com/api/v2/goal/${goalId}`,
-      headers: {
-        Authorization: token
-      }
-    }).then((response) => {
-      expect(response.status).to.eq(200);
-    });
-  });
+      const goalId = createResponse.body.goal.id;
 
-  it("Negative test - get goals without token", () => {
-    cy.request({
-      method: "GET",
-      url: `https://api.clickup.com/api/v2/team/${teamId}/goal`,
-      failOnStatusCode: false
-    }).then((response) => {
-      expect(response.status).to.be.oneOf([400, 401]);
+      cy.request({
+        method: "GET",
+        url: `${baseUrl}/team/${teamId}/goal`,
+        failOnStatusCode: false
+      }).then((negativeResponse) => {
+        expect(negativeResponse.status).to.be.oneOf([400, 401]);
+      });
+
+      cy.request({
+        method: "DELETE",
+        url: `${baseUrl}/goal/${goalId}`,
+        headers
+      }).then((deleteResponse) => {
+        expect(deleteResponse.status).to.eq(200);
+      });
     });
   });
 });
