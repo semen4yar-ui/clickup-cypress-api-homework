@@ -1,14 +1,14 @@
 describe("ClickUp Goals API", () => {
-  const baseUrl = Cypress.env("baseUrl");
   const token = Cypress.env("token");
   const teamId = Cypress.env("teamId");
+  const baseUrl = Cypress.env("baseUrl");
 
   const headers = {
     Authorization: token,
     "Content-Type": "application/json"
   };
 
-  it("Create, get, update and delete goal", () => {
+  it("should create, get, update and delete goal", () => {
     const goalName = "Cypress Goal " + Date.now();
     const updatedGoalName = "Updated Cypress Goal " + Date.now();
 
@@ -59,7 +59,7 @@ describe("ClickUp Goals API", () => {
     });
   });
 
-  it("Should not get goals without token", () => {
+  it("should not get goals without authorization", () => {
     const goalName = "Negative Cypress Goal " + Date.now();
 
     cy.request({
